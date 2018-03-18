@@ -52,24 +52,62 @@ router.post ('/signIn', function (req, res)
 	var account = req.body.account;
 	var password = req.body.password;
 
-	connection.query ('call signIn("' + account + '","' + password + '");',
-		function (err, rows)
+	var json = {};
+	var avatarPath = path.join (__dirname, '../user/' + account + '/avatar.jpg');
+	var avatar = '';
+	async.series ({
+			one: function (callback)
+			{
+				connection.query ('call signIn("' + account + '","' + password + '");',
+					function (err, rows)
+					{
+						if (err)
+						{
+							console.log ('signIn err:' + err);
+							res.end (':-1');
+							//错误优先的回调函数
+							//第一个参数是错误
+							//只要不为空就不会执行后面的task
+							//会调用结果处理的函数
+							callback (err, 1);
+						}
+						else if (JSON.parse (JSON.stringify (rows[0])).length === 0)
+						{
+							res.end (':0');
+							callback ("no such user", 1);
+						}
+						else
+						{
+							json['name'] = JSON.parse (JSON.stringify (rows[0]))[0].name;
+							callback (null, 1);
+						}
+					});
+			},
+			two: function (callback)
+			{
+				fs.readFile (avatarPath, function (err, data)
+				{
+					if (err)
+					{
+						console.log ('getAvatar err:' + err);
+						res.send (json);
+						callback ("no avatar", 2);
+					}
+					else
+					{
+						avatar = data.toString ('base64');
+						json['avatar'] = avatar;
+						res.send (json);
+						callback (null, 2);
+					}
+				});
+			}
+		},
+		function (err)
 		{
-			if (err)
+			if(err!==null)
 			{
-				console.log ('signIn err:' + err);
-				res.end (':-1');
-			}
-			else if (JSON.parse (JSON.stringify (rows[0])).length === 0)
-			{
-				res.end (':0');
-			}
-			else
-			{
-				res.send (JSON.parse (JSON.stringify (rows[0]))[0].name);
-				console.log (JSON.parse (JSON.stringify (rows[0]))[0].name);
-				// res.end (JSON.parse (JSON.stringify (rows[0]))[0].avatar);
-				// console.log (JSON.parse (JSON.stringify (rows[0]))[0].avatar);
+				console.log ('err: ' + err);
 			}
 		});
 });
@@ -87,9 +125,7 @@ router.post ('/getAvatar', function (req, res)
 		}
 		else
 		{
-			res.writeHead (200, {'Content-Type': 'multiparty'});
-			res.send (data);
-			res.end ();
+			res.end (data.toString ('base64'));
 		}
 	});
 });
