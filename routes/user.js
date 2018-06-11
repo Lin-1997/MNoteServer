@@ -6,43 +6,45 @@ var fs = require ("fs");
 var async = require ('async');
 var path = require ("path");
 
-router.post ('/checkAccount', function (req, res)
+router.post ('/findAccount', function (req, res)
 {
 	var account = req.body.account;
-	connection.query ('call checkAccount("' + account + '");', function (err, rows)
+	connection.query ('call findAccount("' + account + '");', function (err, rows)
 	{
 		var num = JSON.parse (JSON.stringify (rows[0]))[0].num;
 		if (err)
 		{
-			console.log ('checkAccount err:' + err);
+			console.log ('findAccount err:' + err);
 			res.end (':-1');
 		}
 		else if (num !== 0)
 		{
-			res.end (':0');
+			res.end (':1');
 		}
 		else
 		{
-			res.end (':1');
+			res.end (':0');
 		}
 	});
 });
 
-router.post ('/register', function (req, res)
+router.post ('/signUp', function (req, res)
 {
 	var account = req.body.account;
 	var password = req.body.password;
-	connection.query ('call register("' + account + '","' + password + '");',
+	connection.query ('call signUp("' + account + '","' + password + '");',
 		function (err)
 		{
 			if (err)
 			{
-				console.log ('register err:' + err);
+				console.log ('signUp err:' + err);
 				res.end (':-1');
 			}
 			else
 			{
 				res.end (':1');
+				var avatarPath = path.join (__dirname, '../user/' + account);
+				fs.mkdirSync(avatarPath);
 			}
 		});
 });
@@ -206,6 +208,25 @@ router.post ('/changePassword', function (req, res)
 			else if (JSON.parse (JSON.stringify (rows[0]))[0].num === 0)
 			{
 				res.end (':0');
+			}
+			else
+			{
+				res.end (':1');
+			}
+		});
+});
+
+router.post ('/forgetPassword', function (req, res)
+{
+	var account = req.body.account;
+	var password = req.body.password;
+	connection.query ('call forgetPassword("' + account + '","' + password + '");',
+		function (err, rows)
+		{
+			if (err)
+			{
+				console.log ('forgetPassword err:' + err);
+				res.end (':-1');
 			}
 			else
 			{
