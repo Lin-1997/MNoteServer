@@ -8,8 +8,8 @@ var path = require ("path");
 
 router.post ('/findAccount', function (req, res)
 {
-	var account = req.body.account;
-	connection.query ('call findAccount("' + account + '");', function (err, rows)
+	var params = [req.body.account];
+	connection.query ('call findAccount(?);', params, function (err, rows)
 	{
 		var num = JSON.parse (JSON.stringify (rows[0]))[0].num;
 		if (err)
@@ -19,10 +19,12 @@ router.post ('/findAccount', function (req, res)
 		}
 		else if (num !== 0)
 		{
+			console.log ('findAccount not empty:' + params);
 			res.end (':1');
 		}
 		else
 		{
+			console.log ('findAccount empty:' + params);
 			res.end (':0');
 		}
 	});
@@ -31,28 +33,28 @@ router.post ('/findAccount', function (req, res)
 router.post ('/signUp', function (req, res)
 {
 	var account = req.body.account;
-	var password = req.body.password;
-	connection.query ('call signUp("' + account + '","' + password + '");',
-		function (err)
+	var params = [account, req.body.password];
+	connection.query ('call signUp(?,?);', params, function (err)
+	{
+		if (err)
 		{
-			if (err)
-			{
-				console.log ('signUp err:' + err);
-				res.end (':-1');
-			}
-			else
-			{
-				res.end (':1');
-				var avatarPath = path.join (__dirname, '../user/' + account);
-				fs.mkdirSync(avatarPath);
-			}
-		});
+			console.log ('signUp err:' + err);
+			res.end (':-1');
+		}
+		else
+		{
+			console.log ('signUp ok:' + params);
+			var avatarPath = path.join (__dirname, '../user/' + account);
+			fs.mkdirSync (avatarPath);
+			res.end (':1');
+		}
+	});
 });
 
 router.post ('/signIn', function (req, res)
 {
 	var account = req.body.account;
-	var password = req.body.password;
+	var params = [account, req.body.password];
 
 	var json = {};
 	var avatarPath = path.join (__dirname, '../user/' + account + '/avatar.jpg');
@@ -60,30 +62,31 @@ router.post ('/signIn', function (req, res)
 	async.series ({
 			one: function (callback)
 			{
-				connection.query ('call signIn("' + account + '","' + password + '");',
-					function (err, rows)
+				connection.query ('call signIn(?,?);', params, function (err, rows)
+				{
+					if (err)
 					{
-						if (err)
-						{
-							console.log ('signIn err:' + err);
-							res.end (':-1');
-							//错误优先的回调函数
-							//第一个参数是错误
-							//只要不为空就不会执行后面的task
-							//会调用结果处理的函数
-							callback (err, 1);
-						}
-						else if (JSON.parse (JSON.stringify (rows[0])).length === 0)
-						{
-							res.end (':0');
-							callback ("no such user", 1);
-						}
-						else
-						{
-							json['name'] = JSON.parse (JSON.stringify (rows[0]))[0].name;
-							callback (null, 1);
-						}
-					});
+						console.log ('signIn err:' + err);
+						res.end (':-1');
+						//错误优先的回调函数
+						//第一个参数是错误
+						//只要不为空就不会执行后面的task
+						//会调用结果处理的函数
+						callback (err, 1);
+					}
+					else if (JSON.parse (JSON.stringify (rows[0])).length === 0)
+					{
+						console.log ('signIn empty:' + params);
+						res.end (':0');
+						callback ("no such user", 1);
+					}
+					else
+					{
+						console.log ('signIn ok:' + params);
+						json['name'] = JSON.parse (JSON.stringify (rows[0]))[0].name;
+						callback (null, 1);
+					}
+				});
 			},
 			two: function (callback)
 			{
@@ -97,6 +100,7 @@ router.post ('/signIn', function (req, res)
 					}
 					else
 					{
+						console.log ('getAvatar ok:' + params);
 						avatar = data.toString ('base64');
 						json['avatar'] = avatar;
 						res.send (json);
@@ -107,9 +111,9 @@ router.post ('/signIn', function (req, res)
 		},
 		function (err)
 		{
-			if(err!==null)
+			if (err !== null)
 			{
-				console.log ('err: ' + err);
+				console.log ('async.series err:' + err);
 			}
 		});
 });
@@ -127,6 +131,7 @@ router.post ('/getAvatar', function (req, res)
 		}
 		else
 		{
+			console.log ('getAvatar ok:' + account);
 			res.end (data.toString ('base64'));
 		}
 	});
@@ -160,11 +165,12 @@ router.post ('/changeAvatar', function (req, res)
 			{
 				if (err)
 				{
-					console.log ('rename error: ' + err);
+					console.log ('rename error:' + err);
 					res.end (':-1');
 				}
 				else
 				{
+					console.log ('changeAvatar ok:' + account);
 					res.end (':1');
 				}
 			});
@@ -174,65 +180,61 @@ router.post ('/changeAvatar', function (req, res)
 
 router.post ('/changeName', function (req, res)
 {
-	var account = req.body.account;
-	var name = req.body.name;
-	connection.query ('call changeName("' + account + '","' + name + '");',
-		function (err)
+	var params = [req.body.account, req.body.name];
+	connection.query ('call changeName(?,?);', params, function (err)
+	{
+		if (err)
 		{
-			if (err)
-			{
-				console.log ('changeName err:' + err);
-				res.end (':-1');
-			}
-			else
-			{
-				res.end (':1');
-			}
-		});
+			console.log ('changeName err:' + err);
+			res.end (':-1');
+		}
+		else
+		{
+			console.log ('changeName ok:' + params);
+			res.end (':1');
+		}
+	});
 });
 
 router.post ('/changePassword', function (req, res)
 {
-	var account = req.body.account;
-	var passwordOld = req.body.passwordOld;
-	var passwordNew = req.body.passwordNew;
-	connection.query ('call changePassword("' + account + '","' + passwordOld
-		+ '","' + passwordNew + '");',
-		function (err, rows)
+	var params = [req.body.account, req.body.passwordOld, req.body.passwordNew];
+	connection.query ('call changePassword(?,?,?);', params, function (err, rows)
+	{
+		if (err)
 		{
-			if (err)
-			{
-				console.log ('changePassword err:' + err);
-				res.end (':-1');
-			}
-			else if (JSON.parse (JSON.stringify (rows[0]))[0].num === 0)
-			{
-				res.end (':0');
-			}
-			else
-			{
-				res.end (':1');
-			}
-		});
+			console.log ('changePassword err:' + err);
+			res.end (':-1');
+		}
+		else if (JSON.parse (JSON.stringify (rows[0]))[0].num === 0)
+		{
+			console.log ('changePassword wrong old password:' + params);
+			res.end (':0');
+		}
+		else
+		{
+			console.log ('changePassword ok:' + params);
+			res.end (':1');
+		}
+	});
 });
 
 router.post ('/forgetPassword', function (req, res)
 {
-	var account = req.body.account;
-	var password = req.body.password;
-	connection.query ('call forgetPassword("' + account + '","' + password + '");',
-		function (err, rows)
+	var params = [req.body.account, req.body.password];
+	connection.query ('call forgetPassword(?,?);', params, function (err, rows)
+	{
+		if (err)
 		{
-			if (err)
-			{
-				console.log ('forgetPassword err:' + err);
-				res.end (':-1');
-			}
-			else
-			{
-				res.end (':1');
-			}
-		});
+			console.log ('forgetPassword err:' + err);
+			res.end (':-1');
+		}
+		else
+		{
+			console.log ('forgetPassword ok:' + params);
+			res.end (':1');
+		}
+	});
 });
 
 module.exports = router;
@@ -263,7 +265,6 @@ module.exports = router;
  console.log ('two: ' + results.two);
  console.timeEnd ('series');
  });
-
 
  //并行且无关联
  console.time ('parallel');

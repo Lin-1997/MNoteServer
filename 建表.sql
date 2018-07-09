@@ -8,10 +8,9 @@ password varchar(20) not null,
 name varchar(20) not null);
 
 create table if not exists note(
-account char(11) not null references user(account) on delete cascade,
-createDate date not null,/*YYYY-MM-DD*/
-createTime time not null,/*HH:MM:SS*/
+account char(11),
+id int not null,
 updateDate date not null,/*YYYY-MM-DD*/
 updateTime time not null,/*HH:MM:SS*/
 content longtext not null,
-id int not null);
+foreign key(account) references user(account) on delete cascade);

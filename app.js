@@ -7,6 +7,23 @@ var bodyParser = require ('body-parser');
 
 var app = express ();
 
+app.all ('*', function (req, res, next)
+{
+	res.header ('Access-Control-Allow-Origin', '*');
+	res.header ('Access-Control-Allow-Headers', 'Content-Type,Content-Length,Authorization,Accept,X-Requested-With');
+	res.header ('Access-Control-Allow-Methods', 'PUT,POST,GET,DELETE,OPTIONS');
+	res.header ('X-Powered-By', ' 3.2.1');
+	//让options请求快速返回
+	if (req.method == 'OPTIONS')
+	{
+		res.send (200);
+	}
+	else
+	{
+		next ();
+	}
+});
+
 // view engine setup
 app.set ('views', path.join (__dirname, 'views'));
 app.set ('view engine', 'jade');
