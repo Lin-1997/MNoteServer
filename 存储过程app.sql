@@ -36,7 +36,7 @@ end //
 
 create procedure getNote(account char(11))
 begin
-select * from note where note.account=account order by updateDate,updateTime desc;
+select * from note where note.account=account order by updateDate desc,updateTime desc;
 end //
 
 delimiter ;

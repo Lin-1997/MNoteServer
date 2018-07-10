@@ -206,6 +206,7 @@ router.post ('/download', function (req, res)
 		}
 		else
 		{
+			console.log (rows);
 			var size = JSON.parse (JSON.stringify (rows[0])).length;
 			var json = {};
 			json['size'] = size;
@@ -214,7 +215,11 @@ router.post ('/download', function (req, res)
 			{
 				item = JSON.parse (JSON.stringify (rows[0]))[i];
 				json['id' + i] = item.id;
-				json['updateDate' + i] = item.updateDate.substr (0, 10);
+
+				//MySQL时区问题读会早8个小时
+				var realDate = new Date (item.updateDate.substr (0, 10));
+				realDate.setDate (realDate.getDate () + 1);
+				json['updateDate' + i] = realDate.Format ("yyyy-MM-dd");
 				json['updateTime' + i] = item.updateTime;
 				json['content' + i] = item.content;
 			}
@@ -226,3 +231,28 @@ router.post ('/download', function (req, res)
 });
 
 module.exports = router;
+
+Date.prototype.Format = function (fmt)
+{
+	var o = {
+		"M+": this.getMonth () + 1,                 //月份
+		"d+": this.getDate (),                    //日
+		"h+": this.getHours (),                   //小时
+		"m+": this.getMinutes (),                 //分
+		"s+": this.getSeconds (),                 //秒
+		"q+": Math.floor ((this.getMonth () + 3) / 3), //季度
+		"S": this.getMilliseconds ()             //毫秒
+	};
+	if (/(y+)/.test (fmt))
+	{
+		fmt = fmt.replace (RegExp.$1, (this.getFullYear () + "").substr (4 - RegExp.$1.length));
+	}
+	for (var k in o)
+	{
+		if (new RegExp ("(" + k + ")").test (fmt))
+		{
+			fmt = fmt.replace (RegExp.$1, (RegExp.$1.length === 1) ? (o[k]) : (("00" + o[k]).substr (("" + o[k]).length)));
+		}
+	}
+	return fmt;
+};

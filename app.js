@@ -32,7 +32,7 @@ app.set ('view engine', 'jade');
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use (logger ('dev'));
 app.use (bodyParser.json ());
-app.use(bodyParser.urlencoded({limit: '100mb', extended: true}));
+app.use (bodyParser.urlencoded ({limit: '100mb', extended: true}));
 app.use (cookieParser ());
 app.use (express.static (path.join (__dirname, 'public')));
 
@@ -40,6 +40,8 @@ var user = require ('./routes/user');
 app.use ('/user', user);
 var note = require ('./routes/note');
 app.use ('/note', note);
+var help = require ('./routes/help');
+app.use ('/help', help);
 
 // catch 404 and forward to error handler
 app.use (function (req, res, next)
