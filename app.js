@@ -1,6 +1,6 @@
 var express = require ('express');
 var path = require ('path');
-var favicon = require ('serve-favicon');
+//var favicon = require ('serve-favicon');
 var logger = require ('morgan');
 var cookieParser = require ('cookie-parser');
 var bodyParser = require ('body-parser');
@@ -14,7 +14,7 @@ app.all ('*', function (req, res, next)
 	res.header ('Access-Control-Allow-Methods', 'PUT,POST,GET,DELETE,OPTIONS');
 	res.header ('X-Powered-By', ' 3.2.1');
 	//让options请求快速返回
-	if (req.method == 'OPTIONS')
+	if (req.method === 'OPTIONS')
 	{
 		res.send (200);
 	}
